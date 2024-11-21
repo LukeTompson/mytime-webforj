@@ -72,31 +72,51 @@ public class AppLayoutView extends Composite<AppLayout> {
     demo.addToContent(new H1(this.contentLabel));
     demo.addClassName("pageTitle");
 
-    Button btn2 = new Button("Get age");
-    demo.addToContent(dashboardContent);
-    dashboardContent.add(btn2);
+    constructDashboard();
+    constructNewEntry();
+    constructEditEntry();
+    constructCustomers();
 
 	}
 
-	private void onTabChange(TabSelectEvent ev) {
+	private void constructDashboard(){
+    Button btn2 = new Button("Get age");
+    demo.addToContent(dashboardContent);
+    dashboardContent.add(btn2);
+  }
+
+  private void constructNewEntry() {
+    Button btn3 = new Button("New entry");
+    newEntryContent = new Div(btn3);
+    demo.addToContent(newEntryContent);
+  }
+
+  private void constructEditEntry() {
+    Button btn4 = new Button("Edit entry");
+    editEntryContent = new Div(btn4);
+    demo.addToContent(editEntryContent);
+  }
+
+  private void constructCustomers() {
+    Button btn5 = new Button("Customers");
+    customersContent = new Div(btn5);
+    demo.addToContent(customersContent);
+  }
+  
+  private void onTabChange(TabSelectEvent ev) {
 		String value = ev.getTab().getText().replaceAll("<[^>]*>", "").trim();
 		contentLabel.setText(value);
     if (value.equals("Dashboard")) {
       dashboardContent.setVisible(true);
-      // newEntryContent.setVisible(false);
+      newEntryContent.setVisible(false);
       editEntryContent.setVisible(false);
       customersContent.setVisible(false);
     }
     if (value.equals("New entry")) {
       dashboardContent.setVisible(false);
+      newEntryContent.setVisible(true);
       editEntryContent.setVisible(false);
       customersContent.setVisible(false);
-      if (newEntryContent == null) {
-        Button btn3 = new Button("New entry");
-        newEntryContent = new Div(btn3);
-        demo.addToContent(newEntryContent);
-        newEntryContent.setVisible(true);
-      }
     }
     if (value.equals("Edit entry")) {
       dashboardContent.setVisible(false);
