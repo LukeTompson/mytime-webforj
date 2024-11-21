@@ -43,7 +43,7 @@ public class AppLayoutView extends Composite<AppLayout> {
 		demo.setDrawerFooterVisible(true);
     demo.setDrawerOpened(false);
 
-		// Header
+		// HEADER
 		header.addClassName("layout__header").add(
         new Img("ws://nexday icon.png"),
 				new H3("MyTime - webforJ Edition"));
