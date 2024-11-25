@@ -62,3 +62,20 @@ html {
 dwc-tab::part(prefix) {
   --dwc-icon-size: var(--dwc-size-xs);
 }
+
+.description {
+	width: 100%;
+	min-width: 445px;
+	text-align:left;
+	margin: auto;
+  padding: 0 5em;
+  /* align-items: center; */
+}
+
+.description dwc-checkbox {
+	margin-top: 2em !important;
+}
+
+.formContent {
+  padding: 0 15em;
+}
