@@ -2,6 +2,9 @@ package com.example.views;
 
 import java.util.List;
 
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoCollection;
+import com.mongodb.client.result.DeleteResult;
 import com.webforj.annotation.InlineStyleSheet;
 import com.webforj.component.Composite;
 import com.webforj.component.Theme;
@@ -33,6 +36,17 @@ import com.webforj.component.toast.Toast;
 import com.webforj.router.annotation.FrameTitle;
 import com.webforj.router.annotation.Route;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoClient;
+import com.mongodb.client.MongoClients;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
+import com.mongodb.client.result.DeleteResult;
+
 // @InlineStyleSheet("context://css/applayout/applayout.css")
 @Route
 @FrameTitle("AppLayout Multiple Headers")
@@ -44,10 +58,15 @@ public class AppLayoutView extends Composite<AppLayout> {
 	Div header = new Div();
 	Div drawer = new Div();
   Div dashboardContent = new Div();
-  FlexLayout newEntryContent = new FlexLayout(FlexDirection.COLUMN);
+  Div newEntryContent = new Div();
+  // FlexLayout newEntryContent = new FlexLayout(FlexDirection.COLUMN);
   Div editEntryContent = new Div();
   Div customersContent = new Div();
   ColumnsLayout newEntryForm;
+
+  MongoCollection collection;
+  MongoDatabase mongoDatabase;
+  MongoClient mongoClient;
 
 	public AppLayoutView() {
 
@@ -105,35 +124,40 @@ public class AppLayoutView extends Composite<AppLayout> {
     CheckBox discountedCheckBox = new CheckBox("Discounted");
     TextField hoursField = new TextField("Hours");
     Button addEntryBtn = new Button("Add Entry", ButtonTheme.PRIMARY);
+    addEntryBtn.addClassName("centerBtns");
     Button deleteDraftBtn = new Button("Delete Draft", ButtonTheme.DANGER);
+    deleteDraftBtn.addClassName("centerBtns");
 
     newEntryForm = new ColumnsLayout(
       List.of(
           new ColumnsLayout.Breakpoint("default", 0, 1),
           new ColumnsLayout.Breakpoint("small", "20em", 1),
           new ColumnsLayout.Breakpoint("medium", "40em", 2),
-          new ColumnsLayout.Breakpoint("large", "60em", 4)),
-          description,customerSelect, billablecCheckBox,
-          discountedCheckBox, hoursField,internalNotes,addEntryBtn,deleteDraftBtn);
+          new ColumnsLayout.Breakpoint("large", "60em", 6)),
+          description,hoursField,customerSelect, billablecCheckBox,
+          discountedCheckBox,internalNotes);
     
-    // newEntryForm.setColumn(description, "default", 4);
-
-    newEntryForm.setSpan(description, 4);
-    newEntryForm.setSpan(customerSelect, 1);
+    newEntryForm.setSpan(description, 6);
+    newEntryForm.setSpan(hoursField, 1);
+    newEntryForm.setSpan(customerSelect, 3);
     newEntryForm.setSpan(billablecCheckBox, 1);
     newEntryForm.setSpan(discountedCheckBox, 1);
-    newEntryForm.setSpan(hoursField, 1);
-    newEntryForm.setSpan(internalNotes, 4);
-    newEntryForm.setColumn(addEntryBtn, 2);
-    newEntryForm.setColumn(deleteDraftBtn, 3);
+    newEntryForm.setSpan(internalNotes, 6);
+    // newEntryForm.setSpan(addEntryBtn, 2);
+    // newEntryForm.setSpan(deleteDraftBtn, 2);
+    // // newEntryForm.setColumn(addEntryBtn, 2);
+    // // newEntryForm.setColumn(deleteDraftBtn, 3);
     
 
     newEntryForm.addClassName("description");
 
     // Button btn3 = new Button("New entry");
-    newEntryContent.addClassName("formContent").add(newEntryForm);
+    // newEntryContent.addClassName("formContent").add(newEntryForm);
     // demo.addToContent(newEntryContent);
-    demo.add(newEntryForm);
+    
+    newEntryContent = new Div(addEntryBtn,deleteDraftBtn);
+    demo.addToContent(newEntryForm, newEntryContent);
+    newEntryForm.setVisible(false);
   }
 
   private void constructEditEntry() {
@@ -153,24 +177,29 @@ public class AppLayoutView extends Composite<AppLayout> {
 		contentLabel.setText(value);
     if (value.equals("Dashboard")) {
       dashboardContent.setVisible(true);
+      newEntryForm.setVisible(false);
       newEntryContent.setVisible(false);
       editEntryContent.setVisible(false);
       customersContent.setVisible(false);
     }
     if (value.equals("New entry")) {
       dashboardContent.setVisible(false);
+      newEntryForm.setVisible(true);
+      newEntryContent.setVisible(true);
       newEntryContent.setVisible(true);
       editEntryContent.setVisible(false);
       customersContent.setVisible(false);
     }
     if (value.equals("Edit entry")) {
       dashboardContent.setVisible(false);
+      newEntryForm.setVisible(false);
       newEntryContent.setVisible(false);
       editEntryContent.setVisible(true);
       customersContent.setVisible(false);
     }
     if (value.equals("Customers")) {
       dashboardContent.setVisible(false);
+      newEntryForm.setVisible(false);
       newEntryContent.setVisible(false);
       editEntryContent.setVisible(false);
       customersContent.setVisible(true);

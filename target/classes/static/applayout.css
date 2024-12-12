@@ -64,11 +64,10 @@ dwc-tab::part(prefix) {
 }
 
 .description {
-	width: 100%;
 	min-width: 445px;
 	text-align:left;
 	margin: auto;
-  padding: 0 5em;
+  padding: 0 15em;
   /* align-items: center; */
 }
 
@@ -78,4 +77,9 @@ dwc-tab::part(prefix) {
 
 .formContent {
   padding: 0 15em;
+}
+
+.centerBtns {
+  margin: 2.5em 0.5em;
+  min-width: 10em;
 }
