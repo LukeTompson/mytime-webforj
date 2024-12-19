@@ -67,7 +67,7 @@ dwc-tab::part(prefix) {
 	min-width: 445px;
 	text-align:left;
 	margin: auto;
-  padding: 0 15em;
+  padding: 0 30%;
   /* align-items: center; */
 }
 

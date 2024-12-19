@@ -1,51 +1,48 @@
 package com.example.views;
 
+import java.util.Arrays;
 import java.util.List;
 
+import org.bson.Document;
+import org.bson.conversions.Bson;
+
+import java.lang.Double;
+
+import com.example.model.Entry;
+import com.mongodb.client.AggregateIterable;
+import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
 import com.mongodb.client.MongoCollection;
+import com.mongodb.client.MongoDatabase;
+import com.mongodb.client.model.Accumulators;
+import com.mongodb.client.model.Aggregates;
 import com.mongodb.client.result.DeleteResult;
-import com.webforj.annotation.InlineStyleSheet;
+import com.webforj.App;
 import com.webforj.component.Composite;
 import com.webforj.component.Theme;
 import com.webforj.component.button.Button;
 import com.webforj.component.button.ButtonTheme;
-import com.webforj.component.element.Element;
+import com.webforj.component.field.NumberField;
+import com.webforj.component.field.TextArea;
+import com.webforj.component.field.TextField;
 import com.webforj.component.html.elements.Div;
 import com.webforj.component.html.elements.H1;
 import com.webforj.component.html.elements.H3;
 import com.webforj.component.html.elements.Img;
 import com.webforj.component.html.elements.Paragraph;
-import com.webforj.component.field.TextField;
-import com.webforj.component.field.PasswordField;
-import com.webforj.component.field.TextArea;
 import com.webforj.component.icons.Icon;
 import com.webforj.component.icons.TablerIcon;
-import com.webforj.component.layout.applayout.AppDrawerToggle;
 import com.webforj.component.layout.applayout.AppLayout;
 import com.webforj.component.layout.columnslayout.ColumnsLayout;
-import com.webforj.component.layout.flexlayout.FlexDirection;
-import com.webforj.component.layout.flexlayout.FlexLayout;
 import com.webforj.component.list.ChoiceBox;
 import com.webforj.component.optioninput.CheckBox;
 import com.webforj.component.tabbedpane.Tab;
 import com.webforj.component.tabbedpane.TabbedPane;
-import com.webforj.component.tabbedpane.TabbedPane.Placement;
 import com.webforj.component.tabbedpane.event.TabSelectEvent;
 import com.webforj.component.toast.Toast;
+import com.webforj.data.binding.BindingContext;
 import com.webforj.router.annotation.FrameTitle;
 import com.webforj.router.annotation.Route;
-
-import org.bson.Document;
-import org.bson.conversions.Bson;
-
-import com.mongodb.client.AggregateIterable;
-import com.mongodb.client.MongoClient;
-import com.mongodb.client.MongoClients;
-import com.mongodb.client.MongoDatabase;
-import com.mongodb.client.model.Accumulators;
-import com.mongodb.client.model.Aggregates;
-import com.mongodb.client.result.DeleteResult;
 
 // @InlineStyleSheet("context://css/applayout/applayout.css")
 @Route
@@ -63,6 +60,16 @@ public class AppLayoutView extends Composite<AppLayout> {
   Div editEntryContent = new Div();
   Div customersContent = new Div();
   ColumnsLayout newEntryForm;
+  private Entry entry = new Entry();
+  private BindingContext<Entry> entryBindingContext;
+  TextArea description = new TextArea("Description");
+  TextArea internalNotes = new TextArea("Internal notes");
+  ChoiceBox customerSelect = new ChoiceBox("Customer");
+  CheckBox billablecCheckBox = new CheckBox("Billable");
+  CheckBox discountedCheckBox = new CheckBox("Discounted");
+  NumberField hoursField = new NumberField("Hours");
+  // Button testButton = new Button("Test button");
+
 
   MongoCollection collection;
   MongoDatabase mongoDatabase;
@@ -108,6 +115,8 @@ public class AppLayoutView extends Composite<AppLayout> {
     constructEditEntry();
     constructCustomers();
 
+    createEntryBindingContext();
+
 	}
 
 	private void constructDashboard(){
@@ -117,16 +126,14 @@ public class AppLayoutView extends Composite<AppLayout> {
   }
 
   private void constructNewEntry() {
-    TextArea description = new TextArea("Description");
-    TextArea internalNotes = new TextArea("Internal notes");
-    ChoiceBox customerSelect = new ChoiceBox("Customer");
-    CheckBox billablecCheckBox = new CheckBox("Billable");
-    CheckBox discountedCheckBox = new CheckBox("Discounted");
-    TextField hoursField = new TextField("Hours");
     Button addEntryBtn = new Button("Add Entry", ButtonTheme.PRIMARY);
-    addEntryBtn.addClassName("centerBtns");
+    addEntryBtn.addClassName("centerBtns").addClickListener(e -> handleCreateButtonClick());;
     Button deleteDraftBtn = new Button("Delete Draft", ButtonTheme.DANGER);
     deleteDraftBtn.addClassName("centerBtns");
+  // testButton.addClickListener(e -> {
+  //   entryBindingContext.write(entry);
+  //   App.consoleLog("Entry description:" + entry.getDescription() + "/  Hours:" + entry.getHours() + "/  cust:" + entry.getCustomer() + "/  billable:" + entry.getBillable() + "/  discount:" + entry.getDiscounted() + "/  internal:" + entry.getInternalNotes());
+  // });
 
     newEntryForm = new ColumnsLayout(
       List.of(
@@ -137,6 +144,7 @@ public class AppLayoutView extends Composite<AppLayout> {
           description,hoursField,customerSelect, billablecCheckBox,
           discountedCheckBox,internalNotes);
     
+    hoursField.setStep(0.25);
     newEntryForm.setSpan(description, 6);
     newEntryForm.setSpan(hoursField, 1);
     newEntryForm.setSpan(customerSelect, 3);
@@ -158,6 +166,8 @@ public class AppLayoutView extends Composite<AppLayout> {
     newEntryContent = new Div(addEntryBtn,deleteDraftBtn);
     demo.addToContent(newEntryForm, newEntryContent);
     newEntryForm.setVisible(false);
+    customerSelect.add("Test1");
+    customerSelect.add("Test2");
   }
 
   private void constructEditEntry() {
@@ -205,4 +215,112 @@ public class AppLayoutView extends Composite<AppLayout> {
       customersContent.setVisible(true);
     }
 	}
+
+  private void createEntryBindingContext() {
+    entryBindingContext = new BindingContext<>(Entry.class, true);
+    entryBindingContext.bind(description,"description")
+    .useSetter(((entry,description) -> {
+      entry.setDescription(description);
+    })).autoValidate(true).add();
+    
+    entryBindingContext.bind(hoursField,"hours")
+    .useSetter(((entry,hoursField) -> {
+      entry.setHours(hoursField);
+    })).add();
+
+    entryBindingContext.bind(customerSelect,"customer")
+    .useSetter(((entry,customerSelect) -> {
+      entry.setCustomer(customerSelect.toString());
+    })).add();
+
+    entryBindingContext.bind(billablecCheckBox,"billable")
+    .useSetter(((entry,billablecCheckBox) -> {
+      entry.setBillable(billablecCheckBox);
+    })).add();
+
+    entryBindingContext.bind(discountedCheckBox,"discounted")
+    .useSetter(((entry,discountedCheckBox) -> {
+      entry.setDiscounted(discountedCheckBox);
+    })).add();
+
+    entryBindingContext.bind(internalNotes,"internalNotes")
+    .useSetter(((entry,internalNotes) -> {
+      entry.setInternalNotes(internalNotes);
+    })).add();
+  }
+
+  private void connectToDb() {
+  String uri = "mongodb://localhost:27017"; // Adjust to your MongoDB URI
+  mongoClient = MongoClients.create(uri);
+  mongoDatabase = mongoClient.getDatabase("mytimeWebforJ");
+  collection = mongoDatabase.getCollection("entries");
+  }
+
+  // CREATE
+  private void handleCreateButtonClick() {
+    connectToDb();
+    Document document = new Document("description",entry.getDescription());
+    document.append("hours",entry.getHours());
+    document.append("customer",entry.getCustomer());
+    document.append("billable",entry.getBillable());
+    document.append("discounted",entry.getDiscounted());
+    document.append("internalNotes",entry.getInternalNotes());
+    collection.insertOne(document);
+    Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database", Theme.GRAY);
+  }
+
+  // RETRIEVE
+  private void handleRetButtonClick() {
+    connectToDb();
+    Document search = new Document("name",retName.getValue());
+    Document foundDocument = (Document) collection.find(search).first();
+    if (foundDocument != null) {
+        Object ageValue = foundDocument.get("age");
+        Toast.show("Retrieved age: " + ageValue, Theme.GRAY);
+    } else {
+        Toast.show("No document found with the given name.", Theme.GRAY);
+    }
+  }
+
+  // UPDATE
+  private void handleUpdateButtonClick() {
+    connectToDb();
+    Document search = new Document("name",upName.getValue());
+    if (search != null) {
+      Bson updatedvalue = new Document("age", upAge.getValue());
+      Bson updateoperation = new Document("$set", updatedvalue);
+      collection.updateOne(search, updateoperation);
+      Toast.show(upName.getValue() + "'s age is updated to " + upAge.getValue(), Theme.GRAY);
+    }
+  }
+
+  // DELETE
+  private void handleDelButtonClick() {
+    connectToDb();
+    Document search = new Document("name", delName.getValue());
+    DeleteResult result = collection.deleteOne(search);
+    if (result.getDeletedCount() > 0) {
+        Toast.show(delName.getValue() + " deleted successfully!", Theme.GRAY);
+    } else {
+        Toast.show("No document found with the given name.", Theme.GRAY);
+    }
+  }
+
+  private void retrieveMaxAge() {
+    connectToDb();
+    List<Bson> pipeline = Arrays.asList(
+        Aggregates.group(null, Accumulators.max("maxAge", "$age"))
+    );
+    AggregateIterable<Document> result = collection.aggregate(pipeline);
+    Document maxAgeDocument = result.first(); // Retrieve the first (and only) document
+    
+    if (maxAgeDocument != null) {
+        String maxAge = maxAgeDocument.get("maxAge").toString();
+        Integer maxAgeInt = Integer.parseInt(maxAge);
+        maxAgeInt += 1;
+        Toast.show("Maximum age is: " + maxAgeInt, Theme.GRAY);
+    } else {
+        Toast.show("No documents found.", Theme.GRAY);
+    }
+  }
 }
