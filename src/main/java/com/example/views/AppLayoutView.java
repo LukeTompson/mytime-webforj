@@ -66,7 +66,7 @@ public class AppLayoutView extends Composite<AppLayout> {
   TextArea description = new TextArea("Description");
   TextArea internalNotes = new TextArea("Internal notes");
   ChoiceBox customerSelect = new ChoiceBox("Customer");
-  CheckBox billablecCheckBox = new CheckBox("Billable");
+  CheckBox billableCheckBox = new CheckBox("Billable");
   CheckBox discountedCheckBox = new CheckBox("Discounted");
   NumberField hoursField = new NumberField("Hours");
   // Button testButton = new Button("Test button");
@@ -142,14 +142,14 @@ public class AppLayoutView extends Composite<AppLayout> {
           new ColumnsLayout.Breakpoint("small", "20em", 1),
           new ColumnsLayout.Breakpoint("medium", "40em", 2),
           new ColumnsLayout.Breakpoint("large", "60em", 6)),
-          description,hoursField,customerSelect, billablecCheckBox,
+          description,hoursField,customerSelect, billableCheckBox,
           discountedCheckBox,internalNotes);
     
     hoursField.setStep(0.25);
     newEntryForm.setSpan(description, 6);
     newEntryForm.setSpan(hoursField, 1);
     newEntryForm.setSpan(customerSelect, 3);
-    newEntryForm.setSpan(billablecCheckBox, 1);
+    newEntryForm.setSpan(billableCheckBox, 1);
     newEntryForm.setSpan(discountedCheckBox, 1);
     newEntryForm.setSpan(internalNotes, 6);
     // newEntryForm.setSpan(addEntryBtn, 2);
@@ -235,9 +235,9 @@ public class AppLayoutView extends Composite<AppLayout> {
       entry.setCustomer(customerSelect.toString());
     })).add();
 
-    entryBindingContext.bind(billablecCheckBox,"billable")
-    .useSetter(((entry,billablecCheckBox) -> {
-      entry.setBillable(billablecCheckBox);
+    entryBindingContext.bind(billableCheckBox,"billable")
+    .useSetter(((entry,billableCheckBox) -> {
+      entry.setBillable(billableCheckBox);
     })).add();
 
     entryBindingContext.bind(discountedCheckBox,"discounted")
@@ -270,9 +270,16 @@ public class AppLayoutView extends Composite<AppLayout> {
       document.append("discounted",entry.getDiscounted());
       document.append("internalNotes",entry.getInternalNotes());
       collection.insertOne(document);
-      Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database", Theme.GRAY);
+      Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database",5000, Theme.GRAY);
+
+      description.setText("");
+      hoursField.setValue(0.00);
+      customerSelect.selectIndex(0);
+      billableCheckBox.setChecked(false);
+      discountedCheckBox.setChecked(false);
+      internalNotes.setText("");
     } else {
-      Toast.show("At least one field is invalid.");
+      Toast.show("At least one field is invalid.",5000,Theme.DANGER);
     }
   }
 
