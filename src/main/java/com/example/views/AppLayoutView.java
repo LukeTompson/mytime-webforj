@@ -41,6 +41,7 @@ import com.webforj.component.tabbedpane.TabbedPane;
 import com.webforj.component.tabbedpane.event.TabSelectEvent;
 import com.webforj.component.toast.Toast;
 import com.webforj.data.binding.BindingContext;
+import com.webforj.data.validation.server.ValidationResult;
 import com.webforj.router.annotation.FrameTitle;
 import com.webforj.router.annotation.Route;
 
@@ -220,7 +221,8 @@ public class AppLayoutView extends Composite<AppLayout> {
     entryBindingContext = new BindingContext<>(Entry.class, true);
     entryBindingContext.bind(description,"description")
     .useSetter(((entry,description) -> {
-      entry.setDescription(description);
+      entry.setDescription(description.trim());
+      // Make sure to add .trim() if no line break is desired
     })).autoValidate(true).add();
     
     entryBindingContext.bind(hoursField,"hours")
@@ -258,15 +260,20 @@ public class AppLayoutView extends Composite<AppLayout> {
 
   // CREATE
   private void handleCreateButtonClick() {
-    connectToDb();
-    Document document = new Document("description",entry.getDescription());
-    document.append("hours",entry.getHours());
-    document.append("customer",entry.getCustomer());
-    document.append("billable",entry.getBillable());
-    document.append("discounted",entry.getDiscounted());
-    document.append("internalNotes",entry.getInternalNotes());
-    collection.insertOne(document);
-    Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database", Theme.GRAY);
+    ValidationResult result = entryBindingContext.write(entry);
+    if (result.isValid()) {
+      connectToDb();
+      Document document = new Document("description",entry.getDescription());
+      document.append("hours",entry.getHours());
+      document.append("customer",entry.getCustomer());
+      document.append("billable",entry.getBillable());
+      document.append("discounted",entry.getDiscounted());
+      document.append("internalNotes",entry.getInternalNotes());
+      collection.insertOne(document);
+      Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database", Theme.GRAY);
+    } else {
+      Toast.show("At least one field is invalid.");
+    }
   }
 
   // RETRIEVE
