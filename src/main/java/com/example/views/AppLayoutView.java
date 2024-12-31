@@ -1,14 +1,20 @@
 package com.example.views;
 
 import java.util.Arrays;
+import java.util.Date;
 import java.util.List;
 
 import org.bson.Document;
 import org.bson.conversions.Bson;
 
 import java.lang.Double;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.format.DateTimeFormatter;
 
 import com.example.model.Entry;
+import com.example.services.Service;
 import com.mongodb.client.AggregateIterable;
 import com.mongodb.client.MongoClient;
 import com.mongodb.client.MongoClients;
@@ -45,6 +51,12 @@ import com.webforj.data.validation.server.ValidationResult;
 import com.webforj.router.annotation.FrameTitle;
 import com.webforj.router.annotation.Route;
 
+import com.webforj.component.Composite;
+import com.webforj.component.html.elements.Div;
+import com.webforj.component.table.Table;
+import com.webforj.router.annotation.FrameTitle;
+import com.webforj.router.annotation.Route;
+
 // @InlineStyleSheet("context://css/applayout/applayout.css")
 @Route
 @FrameTitle("AppLayout Multiple Headers")
@@ -69,6 +81,8 @@ public class AppLayoutView extends Composite<AppLayout> {
   CheckBox billableCheckBox = new CheckBox("Billable");
   CheckBox discountedCheckBox = new CheckBox("Discounted");
   NumberField hoursField = new NumberField("Hours");
+  LocalDateTime currentDate = LocalDateTime.now();
+  Table<Entry> entriesTable = new Table<>();
   // Button testButton = new Button("Test button");
 
 
@@ -121,9 +135,29 @@ public class AppLayoutView extends Composite<AppLayout> {
 	}
 
 	private void constructDashboard(){
-    Button btn2 = new Button("Dashboard");
+    entriesTable.setRepository(Service.getEntries());
+    entriesTable.setWidth("90%");
+    entriesTable.setHeight("40em");
+    entriesTable.setAttribute("margin", "auto");
+    entriesTable.addColumn("Description",Entry::getDescription);
+    entriesTable.addColumn("Customer",Entry::getCustomer);
+    // entriesTable.addColumn("Date Entered",Entry::getDateEntered);
+    entriesTable.addColumn("Date Entered", (Entry entry) -> formatDate(entry.getDateEntered()));
+    entriesTable.addColumn("Hours",Entry::getHours);
+    entriesTable.addColumn("Internal notes",Entry::getInternalNotes);
     demo.addToContent(dashboardContent);
-    dashboardContent.add(btn2);
+    dashboardContent.add(entriesTable);
+  }
+
+  // private static LocalDate convertDate(Date date) {
+  //     return formatDate(date.toInstant()
+  //                 .atZone(ZoneId.systemDefault())
+  //                 .toLocalDate());
+  // }
+
+  public static String formatDate(LocalDateTime date) {
+      DateTimeFormatter formatter = DateTimeFormatter.ofPattern("M/d/yyyy");
+      return date.format(formatter);
   }
 
   private void constructNewEntry() {
@@ -141,17 +175,17 @@ public class AppLayoutView extends Composite<AppLayout> {
           new ColumnsLayout.Breakpoint("default", 0, 1),
           new ColumnsLayout.Breakpoint("small", "20em", 1),
           new ColumnsLayout.Breakpoint("medium", "40em", 2),
-          new ColumnsLayout.Breakpoint("large", "60em", 6)),
+          new ColumnsLayout.Breakpoint("large", "60em", 4)),
           description,hoursField,customerSelect, billableCheckBox,
           discountedCheckBox,internalNotes);
     
     hoursField.setStep(0.25);
-    newEntryForm.setSpan(description, 6);
+    newEntryForm.setSpan(description, 4);
     newEntryForm.setSpan(hoursField, 1);
-    newEntryForm.setSpan(customerSelect, 3);
+    newEntryForm.setSpan(customerSelect, 1);
     newEntryForm.setSpan(billableCheckBox, 1);
     newEntryForm.setSpan(discountedCheckBox, 1);
-    newEntryForm.setSpan(internalNotes, 6);
+    newEntryForm.setSpan(internalNotes, 4);
     // newEntryForm.setSpan(addEntryBtn, 2);
     // newEntryForm.setSpan(deleteDraftBtn, 2);
     // // newEntryForm.setColumn(addEntryBtn, 2);
@@ -247,7 +281,7 @@ public class AppLayoutView extends Composite<AppLayout> {
 
     entryBindingContext.bind(internalNotes,"internalNotes")
     .useSetter(((entry,internalNotes) -> {
-      entry.setInternalNotes(internalNotes);
+      entry.setInternalNotes(internalNotes.trim());
     })).add();
   }
 
@@ -269,6 +303,7 @@ public class AppLayoutView extends Composite<AppLayout> {
       document.append("billable",entry.getBillable());
       document.append("discounted",entry.getDiscounted());
       document.append("internalNotes",entry.getInternalNotes());
+      document.append("dateEntered",currentDate);
       collection.insertOne(document);
       Toast.show("Entry for " + entry.getCustomer() + " (" + entry.getHours() + " hours) inserted into database",5000, Theme.GRAY);
 
@@ -283,42 +318,42 @@ public class AppLayoutView extends Composite<AppLayout> {
     }
   }
 
-  // RETRIEVE
-  private void handleRetButtonClick() {
-    connectToDb();
-    Document search = new Document("name",retName.getValue());
-    Document foundDocument = (Document) collection.find(search).first();
-    if (foundDocument != null) {
-        Object ageValue = foundDocument.get("age");
-        Toast.show("Retrieved age: " + ageValue, Theme.GRAY);
-    } else {
-        Toast.show("No document found with the given name.", Theme.GRAY);
-    }
-  }
+  // // RETRIEVE
+  // private void handleRetButtonClick() {
+  //   connectToDb();
+  //   Document search = new Document("name",retName.getValue());
+  //   Document foundDocument = (Document) collection.find(search).first();
+  //   if (foundDocument != null) {
+  //       Object ageValue = foundDocument.get("age");
+  //       Toast.show("Retrieved age: " + ageValue, Theme.GRAY);
+  //   } else {
+  //       Toast.show("No document found with the given name.", Theme.GRAY);
+  //   }
+  // }
 
-  // UPDATE
-  private void handleUpdateButtonClick() {
-    connectToDb();
-    Document search = new Document("name",upName.getValue());
-    if (search != null) {
-      Bson updatedvalue = new Document("age", upAge.getValue());
-      Bson updateoperation = new Document("$set", updatedvalue);
-      collection.updateOne(search, updateoperation);
-      Toast.show(upName.getValue() + "'s age is updated to " + upAge.getValue(), Theme.GRAY);
-    }
-  }
+  // // UPDATE
+  // private void handleUpdateButtonClick() {
+  //   connectToDb();
+  //   Document search = new Document("name",upName.getValue());
+  //   if (search != null) {
+  //     Bson updatedvalue = new Document("age", upAge.getValue());
+  //     Bson updateoperation = new Document("$set", updatedvalue);
+  //     collection.updateOne(search, updateoperation);
+  //     Toast.show(upName.getValue() + "'s age is updated to " + upAge.getValue(), Theme.GRAY);
+  //   }
+  // }
 
-  // DELETE
-  private void handleDelButtonClick() {
-    connectToDb();
-    Document search = new Document("name", delName.getValue());
-    DeleteResult result = collection.deleteOne(search);
-    if (result.getDeletedCount() > 0) {
-        Toast.show(delName.getValue() + " deleted successfully!", Theme.GRAY);
-    } else {
-        Toast.show("No document found with the given name.", Theme.GRAY);
-    }
-  }
+  // // DELETE
+  // private void handleDelButtonClick() {
+  //   connectToDb();
+  //   Document search = new Document("name", delName.getValue());
+  //   DeleteResult result = collection.deleteOne(search);
+  //   if (result.getDeletedCount() > 0) {
+  //       Toast.show(delName.getValue() + " deleted successfully!", Theme.GRAY);
+  //   } else {
+  //       Toast.show("No document found with the given name.", Theme.GRAY);
+  //   }
+  // }
 
   private void retrieveMaxAge() {
     connectToDb();

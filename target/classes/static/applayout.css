@@ -64,10 +64,10 @@ dwc-tab::part(prefix) {
 }
 
 .description {
-	min-width: 445px;
+  max-width: 960px;
+  width: 100%;
 	text-align:left;
 	margin: auto;
-  padding: 0 30%;
   /* align-items: center; */
 }
 

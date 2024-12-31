@@ -1,5 +1,9 @@
 package com.example.model;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Date;
+
 import com.basis.bbj.web.gwt.server.message.decomposergen.grid_GridSetStringsMessageDecomposer;
 
 import jakarta.validation.constraints.NotEmpty;
@@ -59,5 +63,13 @@ public class Entry {
     }
     public void setInternalNotes(String internalNotes) {
         this.internalNotes = internalNotes;
+    }
+
+    LocalDateTime dateEntered;
+    public LocalDateTime getDateEntered() {
+        return dateEntered;
+    }
+    public void setDateEntered(LocalDateTime dateEntered) {
+        this.dateEntered = dateEntered;
     }
 }
